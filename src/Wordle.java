@@ -31,8 +31,16 @@ public class Wordle {
         while(gameLost == false && wordGuessed == false){
             grid.printGrid();
             System.out.println("Guess a word");
-
-            String userGuess = scan.nextLine();
+            boolean allowedGuess = false;
+            String userGuess = "";
+            while(allowedGuess == false){
+                userGuess = scan.nextLine();
+                if(!isAllowedGuess(userGuess.toLowerCase())){
+                    System.out.println("Not a Word");
+                }else{
+                    allowedGuess = true;
+                }
+            }
             userGuess = userGuess.toUpperCase();
 
             grid.updateColorGrid(checkColor(userGuess), numGuesses);
@@ -51,9 +59,14 @@ public class Wordle {
     }
 
     public boolean isAllowedGuess(String guess){
-        for(String word : allowedGuesses){
-            if(guess == allowedGuesses)
+        if(guess.length() == 5){
+            for(String word : allowedGuesses){
+                if(guess.equals(word)){
+                    return true;
+                }
+            }
         }
+        return false;
     }
 
     public String checkColor(String word){
