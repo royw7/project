@@ -5,21 +5,38 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Scanner;
 
+/**
+ * This class represents a Wordle Object
+ *
+ * @author Roy Wu
+ */
 public class Wordle {
-    String theWord; //word player has to guess
-    boolean wordGuessed; //determines if player has guessed the word
+    /** The word that the player will have to guess */
+    String theWord;
+    /** Determines if the player have guessed the word */
+    boolean wordGuessed;
+    /** Determines if the player lost */
     boolean gameLost;
+    /** Tracks how many guesses the player has took */
     public int numGuesses;
+    /** Stores a grid object */
     Grid grid;
+    /** Scanner object */
     Scanner scan;
+    /** ArrayList that stores all possible legal words that the player can guess */
     ArrayList<String> allowedGuesses;
 
+    /** Instantiates a Grid object.
+     *
+     * @param grid grid object to show Wordle game
+     */
     public Wordle(Grid grid){
         ArrayList<String> possibleAnswers = new ArrayList<>();
-        loadWordsInto(possibleAnswers);
-        theWord = possibleAnswers.get((int) Math.random() * possibleAnswers.size()); // set word to be guessed
+        loadAnswers(possibleAnswers);
+        theWord = possibleAnswers.get((int) (Math.random() * possibleAnswers.size())).toUpperCase(); // set word to be guessed
         allowedGuesses = new ArrayList<>();
-        loadWordsInto2(allowedGuesses);
+        loadAnswers(allowedGuesses);
+        loadExtraWords(allowedGuesses);
         numGuesses = 0;
         gameLost = false;
         wordGuessed = false;
@@ -27,17 +44,20 @@ public class Wordle {
         this.grid = grid;
     }
 
+    /** Runs the Wordle game; Contains all the logic for the Wordle game */
     public void runGame(){
-        while(gameLost == false && wordGuessed == false){
+        while(gameLost == false && wordGuessed == false) {
             grid.printGrid();
             System.out.println("Guess a word");
             boolean allowedGuess = false;
             String userGuess = "";
-            while(allowedGuess == false){
+            while(allowedGuess == false || userGuess.length() != 5) {
                 userGuess = scan.nextLine();
-                if(!isAllowedGuess(userGuess.toLowerCase())){
+                if(userGuess.length() != 5){
+                    System.out.println("Not a 5 letter word");
+                }else if(!isAllowedGuess(userGuess.toLowerCase())) {
                     System.out.println("Not a Word");
-                }else{
+                }else {
                     allowedGuess = true;
                 }
             }
@@ -45,83 +65,119 @@ public class Wordle {
 
             grid.updateColorGrid(checkColor(userGuess), numGuesses);
             grid.updateGrid(userGuess, numGuesses);
-            System.out.println(checkColor(userGuess));
             grid.printGrid();
-            if(isCorrectWord(userGuess)){
+
+            if(isCorrectWord(userGuess)) {
                 wordGuessed = true;
                 System.out.println("you win");
             }
             numGuesses++;
-            if(numGuesses == 5){
+            if(numGuesses == 6) {
                 gameLost = true;
+                System.out.println("You Lost, the word was " + theWord);
             }
        }
     }
 
-    public boolean isAllowedGuess(String guess){
-        if(guess.length() == 5){
-            for(String word : allowedGuesses){
-                if(guess.equals(word)){
+    /** Checks to see if the word is a legal word
+     *
+     * @param guess Word to be checked
+     * @return If the word is a legal word
+     */
+    public boolean isAllowedGuess(String guess) {
+            for(String word : allowedGuesses) {
+                if(guess.equals(word)) {
                     return true;
                 }
             }
-        }
         return false;
     }
 
-    public String checkColor(String word){
+    /** Gets the color for each character in a word. Yellow if the character is
+     * in theWord, green if the character is in theWord and the same index
+     * <p>
+     * PRECONDITION: word is a 5 letter word.
+     *
+     * @param word word to be checked
+     * @return color array with each element representing a color for each character from word
+     */
+    public Color[] checkColor(String word) {
        String[] guess = characterToList(word);
        String[] rightWord = characterToList(theWord);
-       String returnString = "";
+       Color[] colorList = new Color[5];
+
         boolean wasShown = false;
         boolean rightPosition = false;
-       for(int i = 0; i < 5; i++){
+       for(int i = 0; i < 5; i++) {
            wasShown = false;
            rightPosition = false;
-           for(int j = 0; j < 5; j++){
-               if(guess[i].equals(rightWord[j]) && i == j){
+           for(int j = 0; j < 5; j++) {
+               if(guess[i].equals(rightWord[j]) && i == j) {
                     rightPosition = true;
                }
-               else if(guess[i].equals(rightWord[j])){
+               else if(guess[i].equals(rightWord[j])) {
                    wasShown = true;
                }
            }
-           if(rightPosition == true){
-               returnString += "G";//GREEN + guess[i];
-           }else if(wasShown == true){
-               returnString += "Y";//YELLOW + guess[i];
+           if(rightPosition == true) {
+               colorList[i] = new Color("G");
+           }else if(wasShown == true) {
+               colorList[i] = new Color("Y");;
            }else {
-               returnString += "W";//WHITE + guess[i];
+               colorList[i] = new Color("W");
            }
        }
-       return returnString;
+       return colorList;
     }
 
-    public boolean isCorrectWord(String word){
-        if(word.equals(theWord)){
+    /** Checks to see if the word is the right answer
+     *
+     * @param word the word to be checked
+     * @return If the word is the right answer
+     */
+    public boolean isCorrectWord(String word) {
+        if(word.equals(theWord)) {
             wordGuessed = true;
         }
         return wordGuessed;
     }
 
-    //breaks word into character list
-    public static String[] characterToList(String word){
+    /** Static method that turns a word into a character array
+     * <p>
+     * PRECONDITION: word parameter is a 5 letter word
+     *
+     * @param word word to be turned into a character array
+     * @return character array of given word
+     */
+    public static String[] characterToList(String word) {
         String[] wordString = new String[5];
-        for(int i = 0; i < 5; i++){
+        for(int i = 0; i < 5; i++) {
             wordString[i] = word.substring(i, i + 1);
         }
         return wordString;
     }
 
-    public int getNumGuesses(){
+    /** get the current number of guesses
+     *
+     * @return the number of guesses
+     */
+    public int getNumGuesses() {
         return numGuesses;
     }
-    public String getTheWord(){
+
+    /** gets the word that user is supposed to guess
+     *
+     * @return the word that the user is supposed to guess
+     */
+    public String getTheWord() {
         return theWord;
     }
 
-    public static void loadWordsInto(ArrayList<String> wordList)
-    {
+    /** Loads wordle-nyt-answers-alphabetical.txt(txt file containing possible answers) into an ArrayList
+     *
+     * @param wordList ArrayList to load wordle-nyt-answers-alphabetical.txt into
+     */
+    public static void loadAnswers(ArrayList<String> wordList) {
         try
         {
             Scanner input = new Scanner(new File("src\\wordle-nyt-answers-alphabetical.txt"));
@@ -137,8 +193,11 @@ public class Wordle {
         }
     }
 
-    public static void loadWordsInto2(ArrayList<String> wordList)
-    {
+    /** Loads wordle-nyt-allowed-guesses.txt(txt files containing extra possible guesses) into a ArrayList.
+     *
+     * @param wordList ArrayList to be loaded into
+     */
+    public static void loadExtraWords(ArrayList<String> wordList) {
         try
         {
             Scanner input = new Scanner(new File("src\\wordle-nyt-allowed-guesses.txt"));
